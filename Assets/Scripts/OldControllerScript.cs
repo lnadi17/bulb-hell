@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ControllerScript : MonoBehaviour {
+public class OldControllerScript : MonoBehaviour {
     public int numberOfBacksteps = 10;
 
     public List<GameObject> buttonRows;
@@ -26,6 +26,12 @@ public class ControllerScript : MonoBehaviour {
             buttons.Add(row);
         }
         NewGame();
+    }
+
+    void Update() {
+	if (Input.GetKeyDown(KeyCode.Escape)) {
+	    Application.Quit();
+	}
     }
 
     public void NewGame() {
