@@ -8,9 +8,15 @@ public class ControllerScript : MonoBehaviour {
     [SerializeField] private Color onColor;
     [SerializeField] private Color offColor;
 
+    [SerializeField] private float edgeOffset;
+    [SerializeField] private float gap;
+    [SerializeField] private float topOffsetPercentage;
+    [SerializeField] private float bottomOffsetPercentage;
+    [SerializeField] private GameObject cellObject;
+
     [SerializeField] private int boardSize = 5;
 
-    [SerializeField] private Text winText;
+    [SerializeField] private GameObject winText;
 
     private List<List<bool>> _matrix;
     private List<List<GameObject>> _buttons;
@@ -31,10 +37,51 @@ public class ControllerScript : MonoBehaviour {
         DrawBoard();
     }
 
+    public void RedrawBoard() {
+        Destroy(GameObject.Find("Board"));
+        DrawBoard();
+    }
+
     private void DrawBoard() {
         _matrix = new List<List<bool>>();
         _buttons = new List<List<GameObject>>();
         _hints = new List<Vector2Int>();
+
+        float leftEdge = 0;
+        float topEdge = 0;
+        var orthographicSize = _camera.orthographicSize;
+        var cellWidth = (orthographicSize * _camera.aspect * 2 - edgeOffset * 2 - gap * (boardSize - 1)) / boardSize;
+
+        if (cellWidth * boardSize + edgeOffset * 2 + gap * (boardSize - 1) >
+            orthographicSize * 2 * (1 - topOffsetPercentage - bottomOffsetPercentage)) {
+            cellWidth = (orthographicSize * 2 * (1 - topOffsetPercentage - bottomOffsetPercentage) - 2 * edgeOffset -
+                         gap * (boardSize - 1)) / boardSize;
+            leftEdge = (orthographicSize * 2 * _camera.aspect - 2 * edgeOffset - (boardSize - 1) * gap -
+                        cellWidth * boardSize) * 0.5f;
+        } else {
+            topEdge = (orthographicSize * 2 * (1 - topOffsetPercentage - bottomOffsetPercentage) - 2 * edgeOffset -
+                       (boardSize - 1) * gap - cellWidth * boardSize) * 0.5f;
+        }
+
+        var board = new GameObject("Board");
+        for (var i = 0; i < boardSize; i++) {
+            var row = new List<GameObject>();
+            var rowParent = new GameObject("Row " + (i + 1));
+            rowParent.transform.parent = board.transform;
+            for (var j = 0; j < boardSize; j++) {
+                var buttonX = leftEdge + edgeOffset + j * gap + j * cellWidth + cellWidth * 0.5f -
+                              orthographicSize * _camera.aspect;
+                var buttonY = orthographicSize - topEdge - topOffsetPercentage * (orthographicSize * 2) -
+                              i * cellWidth - i * gap - cellWidth * 0.5f - edgeOffset;
+                var newPosition = new Vector3(buttonX, buttonY, 0);
+                var button = Instantiate(cellObject, newPosition, Quaternion.identity, rowParent.transform);
+                button.transform.localScale = new Vector2(cellWidth, cellWidth);
+                button.name = "Button " + (j + 1);
+                row.Add(button);
+            }
+
+            _buttons.Add(row);
+        }
 
         NewGame();
     }
@@ -51,8 +98,7 @@ public class ControllerScript : MonoBehaviour {
             if (hit) {
                 TriggerBulb(hit.collider.gameObject);
             }
-        }
-        else {
+        } else {
             if (!Input.GetMouseButtonDown(0)) return;
             Vector2 origin = _camera.ScreenToWorldPoint(Input.mousePosition);
             var hit = Physics2D.Raycast(origin, Vector2.zero, 100, LayerMask.GetMask("Clickable"));
@@ -63,7 +109,7 @@ public class ControllerScript : MonoBehaviour {
     }
 
     public void NewGame() {
-        winText.enabled = false;
+        winText.SetActive(false);
         _matrix.Clear();
         _hints.Clear();
         GenerateWinnableMatrix();
@@ -129,7 +175,7 @@ public class ControllerScript : MonoBehaviour {
         }
 
         // Update win text
-        winText.enabled = GameWon();
+        winText.SetActive(GameWon());
 
         // Print remaining moves
         Debug.Log(_hints.Count);
@@ -138,8 +184,7 @@ public class ControllerScript : MonoBehaviour {
     private void UpdateHints(Vector2Int move) {
         if (_hints.Contains(move)) {
             _hints.Remove(move);
-        }
-        else {
+        } else {
             _hints.Add(move);
         }
     }
@@ -155,7 +200,7 @@ public class ControllerScript : MonoBehaviour {
             _matrix[n.x][n.y] = !_matrix[n.x][n.y];
         }
 
-        winText.enabled = GameWon();
+        winText.SetActive(GameWon());
         // Update hints
         UpdateHints(new Vector2Int(row, col));
     }
