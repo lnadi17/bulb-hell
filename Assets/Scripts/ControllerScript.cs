@@ -1,27 +1,42 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Sirenix.OdinInspector;
+using Unity.Collections;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class ControllerScript : MonoBehaviour {
-    [SerializeField] private int numberOfBacksteps = 10;
+    # region Definitions
 
-    [SerializeField] private Color onColor;
-    [SerializeField] private Color offColor;
+    [MinValue(0)] [SerializeField] private int numberOfBacksteps = 10;
 
-    [SerializeField] private float edgeOffset;
-    [SerializeField] private float gap;
-    [SerializeField] private float topOffsetPercentage;
-    [SerializeField] private float bottomOffsetPercentage;
-    [SerializeField] private GameObject cellObject;
+    [ColorPalette("Light Cell Colors")] [SerializeField]
+    private Color onColor;
 
-    [SerializeField] private int boardSize = 5;
+    [ColorPalette("Dark Cell Colors")] [SerializeField]
+    private Color offColor;
 
-    [SerializeField] private GameObject winText;
 
+    [Range(0, 1f)] [SerializeField] private float edgeOffset;
+    [Range(0, 0.5f)] [SerializeField] private float gap;
+    [Range(0, 1f)] [SerializeField] private float topOffsetPercentage = 0.2f;
+    [Range(0, 1f)] [SerializeField] private float bottomOffsetPercentage = 0.1f;
+    [AssetsOnly] [SerializeField] private GameObject cellObject;
+    [SceneObjectsOnly] [SerializeField] private GameObject winText;
+
+    [ShowInInspector] [Sirenix.OdinInspector.ReadOnly]
+    private int _boardSize = 5;
+
+    [ShowInInspector] [TableList(ShowIndexLabels = true)] [Sirenix.OdinInspector.ReadOnly]
     private List<List<bool>> _matrix;
+
     private List<List<GameObject>> _buttons;
     private List<Vector2Int> _hints;
     private Camera _camera;
+
+    #endregion
 
     private void Awake() {
         _camera = Camera.main;
@@ -32,7 +47,7 @@ public class ControllerScript : MonoBehaviour {
     }
 
     public void RedrawBoard(Slider slider) {
-        boardSize = (int) slider.value;
+        _boardSize = (int) slider.value;
         Destroy(GameObject.Find("Board"));
         DrawBoard();
     }
@@ -50,25 +65,25 @@ public class ControllerScript : MonoBehaviour {
         float leftEdge = 0;
         float topEdge = 0;
         var orthographicSize = _camera.orthographicSize;
-        var cellWidth = (orthographicSize * _camera.aspect * 2 - edgeOffset * 2 - gap * (boardSize - 1)) / boardSize;
+        var cellWidth = (orthographicSize * _camera.aspect * 2 - edgeOffset * 2 - gap * (_boardSize - 1)) / _boardSize;
 
-        if (cellWidth * boardSize + edgeOffset * 2 + gap * (boardSize - 1) >
+        if (cellWidth * _boardSize + edgeOffset * 2 + gap * (_boardSize - 1) >
             orthographicSize * 2 * (1 - topOffsetPercentage - bottomOffsetPercentage)) {
             cellWidth = (orthographicSize * 2 * (1 - topOffsetPercentage - bottomOffsetPercentage) - 2 * edgeOffset -
-                         gap * (boardSize - 1)) / boardSize;
-            leftEdge = (orthographicSize * 2 * _camera.aspect - 2 * edgeOffset - (boardSize - 1) * gap -
-                        cellWidth * boardSize) * 0.5f;
+                         gap * (_boardSize - 1)) / _boardSize;
+            leftEdge = (orthographicSize * 2 * _camera.aspect - 2 * edgeOffset - (_boardSize - 1) * gap -
+                        cellWidth * _boardSize) * 0.5f;
         } else {
             topEdge = (orthographicSize * 2 * (1 - topOffsetPercentage - bottomOffsetPercentage) - 2 * edgeOffset -
-                       (boardSize - 1) * gap - cellWidth * boardSize) * 0.5f;
+                       (_boardSize - 1) * gap - cellWidth * _boardSize) * 0.5f;
         }
 
         var board = new GameObject("Board");
-        for (var i = 0; i < boardSize; i++) {
+        for (var i = 0; i < _boardSize; i++) {
             var row = new List<GameObject>();
             var rowParent = new GameObject("Row " + (i + 1));
             rowParent.transform.parent = board.transform;
-            for (var j = 0; j < boardSize; j++) {
+            for (var j = 0; j < _boardSize; j++) {
                 var buttonX = leftEdge + edgeOffset + j * gap + j * cellWidth + cellWidth * 0.5f -
                               orthographicSize * _camera.aspect;
                 var buttonY = orthographicSize - topEdge - topOffsetPercentage * (orthographicSize * 2) -
@@ -114,8 +129,8 @@ public class ControllerScript : MonoBehaviour {
         _hints.Clear();
         GenerateWinnableMatrix();
         // Assign color to each button
-        for (var i = 0; i < boardSize; i++) {
-            for (var j = 0; j < boardSize; j++) {
+        for (var i = 0; i < _boardSize; i++) {
+            for (var j = 0; j < _boardSize; j++) {
                 _buttons[i][j].GetComponent<SpriteRenderer>().color = _matrix[i][j] ? onColor : offColor;
             }
         }
@@ -127,9 +142,9 @@ public class ControllerScript : MonoBehaviour {
 
     private void GenerateWinnableMatrix() {
         // Start from win
-        for (var i = 0; i < boardSize; i++) {
+        for (var i = 0; i < _boardSize; i++) {
             var row = new List<bool>();
-            for (var j = 0; j < boardSize; j++) {
+            for (var j = 0; j < _boardSize; j++) {
                 row.Add(true);
             }
 
@@ -139,8 +154,8 @@ public class ControllerScript : MonoBehaviour {
         // Trigger random bulbs to go backwards and record these moves in hints
         for (var i = 0; i < numberOfBacksteps; i++) {
             // Generate random move
-            var row = Random.Range(0, boardSize);
-            var col = Random.Range(0, boardSize);
+            var row = Random.Range(0, _boardSize);
+            var col = Random.Range(0, _boardSize);
             var move = new Vector2Int(row, col);
 
             // Trigger corresponding bulbs
@@ -168,8 +183,8 @@ public class ControllerScript : MonoBehaviour {
         // Remove played move from hints
         _hints.Remove(move);
         // Update buttons on screen
-        for (var i = 0; i < boardSize; i++) {
-            for (var j = 0; j < boardSize; j++) {
+        for (var i = 0; i < _boardSize; i++) {
+            for (var j = 0; j < _boardSize; j++) {
                 _buttons[i][j].GetComponent<SpriteRenderer>().color = _matrix[i][j] ? onColor : offColor;
             }
         }
@@ -206,8 +221,8 @@ public class ControllerScript : MonoBehaviour {
     }
 
     private bool GameWon() {
-        for (var i = 0; i < boardSize; i++) {
-            for (var j = 0; j < boardSize; j++) {
+        for (var i = 0; i < _boardSize; i++) {
+            for (var j = 0; j < _boardSize; j++) {
                 if (!_matrix[i][j]) {
                     return false;
                 }

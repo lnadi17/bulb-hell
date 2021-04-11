@@ -6,9 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Scenes/UI_Buttons.unity
+    path: Assets/Scenes/UI_Cells.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 1
-    path: Assets/Scenes/Sprite_Buttons.unity
+    path: Assets/Scenes/Main.unity
     guid: 4acbcada717288f43b2c6d9472ca35bc
   m_configObjects: {}
