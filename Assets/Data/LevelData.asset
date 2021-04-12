@@ -20,25 +20,16 @@ MonoBehaviour:
     Prefab: {fileID: 0}
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
-    SerializationNodes: []
-  levels:
-  - index: 0
-    size: 5
-  - index: 1
-    size: 5
-  - index: 2
-    size: 5
-  - index: 3
-    size: 5
-  - index: 4
-    size: 5
-  - index: 5
-    size: 5
-  - index: 6
-    size: 5
-  - index: 7
-    size: 5
-  - index: 8
-    size: 5
-  - index: 9
-    size: 5
+    SerializationNodes:
+    - Name: levels
+      Entry: 7
+      Data: 0|ScriptableObjects.LevelData+Level[], Assembly-CSharp
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
